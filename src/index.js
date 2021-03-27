@@ -2,6 +2,7 @@ const fs = require("fs");
 const { bookmarkFileName } = require("./config.js");
 const Bookmark = require("./Bookmark");
 const HTMLParser = require("node-html-parser");
+const YAML = require("yaml");
 
 function readBookmarks(filename) {
   return new Promise((resolve, reject) => {
@@ -44,6 +45,14 @@ function sortBookmarks(bookMarks, asc = true) {
   }
 }
 
+function getBookmarksAfter(date, bookmarks) {
+  const bm = bookmarks.filter((b) => b.dateAdded > date.getTime());
+  return bm;
+}
+
+function convertBookmarksToYaml(bookmarks) {
+  return YAML.stringify(bookmarks);
+}
 
 (async () => {
   let bookmarkData;
@@ -69,5 +78,15 @@ function sortBookmarks(bookMarks, asc = true) {
   });
 
   sortBookmarks(bookMarks);
-  bookMarks.forEach(bookmark => console.log(new Date(bookmark.dateAdded).getFullYear())); 
+  const newBookmarks = getBookmarksAfter(new Date(2021,0,1), bookMarks);
+
+  // convert the bookmarks object to YAML and write it out to a file.
+  const yamlString = convertBookmarksToYaml(newBookmarks);
+  fs.writeFile("../data/bookmarks.yaml", yamlString, "utf-8", (err) => {
+    if(err) {
+      console.log(`Error writing file: ${err}.`);
+    } else {
+      console.log("Wrote YAML File");
+    }
+  });
 })();
